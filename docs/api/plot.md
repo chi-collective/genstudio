@@ -41,13 +41,19 @@ Parameters
 
 - `frames` (list): A list of plot specifications or renderable objects to animate.
 
-- `**opts`: Additional options for the animation, such as fps (frames per second).
+- `key` (str | None): The state key to use for the frame index. If None, uses "frame".
+
+- `slider` (bool): Whether to show the slider control. Defaults to True.
+
+- `tail` (bool): Whether animation should stop at the end. Defaults to False.
+
+- `**opts` (Any): Additional options for the animation, such as fps (frames per second).
 
 Returns
 {: .api .api-section }
 
 
-- A Hiccup-style representation of the animated plot.
+- A Hiccup-style representation of the animated plot. (LayoutItem)
 
 
 
@@ -81,7 +87,7 @@ Parameters
 
 - `controls` (list): List of controls to display, such as ["slider", "play", "fps"]. Defaults to ["slider"] if fps is not set, otherwise ["slider", "play"].
 
-- `**kwargs`: Additional keyword arguments.
+- `**kwargs` (Any): Additional keyword arguments.
 
 Returns
 {: .api .api-section }
@@ -101,9 +107,7 @@ Must be passed as the 'render' option to a mark, e.g.:
         onClick=handle_click
     ))
 
-This function enhances the rendering of plot elements by adding interactive behaviors
-such as dragging, clicking, and tracking position changes. It's designed to work with
-Observable Plot's rendering pipeline.
+This function enhances the rendering of plot elements by adding interactive behaviors such as dragging, clicking, and tracking position changes. It's designed to work with Observable Plot's rendering pipeline.
 
 Parameters
 {: .api .api-section }
@@ -264,6 +268,40 @@ Parameters
 
 
 
+### cond {: .api .api-member }
+
+Render content based on conditions, like Clojure's cond.
+
+Takes pairs of test/expression arguments, evaluating each test in order.
+When a test is truthy, returns its corresponding expression.
+An optional final argument serves as the "else" expression.
+
+Parameters
+{: .api .api-section }
+
+
+- `*args`: Alternating test/expression pairs, with optional final else expression
+
+
+
+### case {: .api .api-member }
+
+Render content based on matching a value against cases, like a switch statement.
+
+Takes a value to match against, followed by pairs of case/expression arguments.
+When a case matches the value, returns its corresponding expression.
+An optional final argument serves as the default expression.
+
+Parameters
+{: .api .api-section }
+
+
+- `value` (Union[JSCode, str, Any]): The value to match against cases
+
+- `*args`: Alternating case/expression pairs, with optional final default expression
+
+
+
 ### html {: .api .api-member }
 
 Wraps a Hiccup-style list to be rendered as an interactive widget in the JavaScript runtime.
@@ -276,6 +314,12 @@ Render a string as Markdown, in a LayoutItem.
 
 
 
+### JSExpr {: .api .api-member }
+
+A type alias representing JavaScript expressions that can be evaluated in the runtime.
+
+
+
 
 ## JavaScript Interop
 
@@ -283,13 +327,19 @@ Render a string as Markdown, in a LayoutItem.
 
 Represents raw JavaScript code to be evaluated as a LayoutItem.
 
+The code will be evaluated in a scope that includes:
+- $state: Current plot state
+- html: render HTML using a JavaScript hiccup syntax
+- d3: D3.js library
+- genstudio.api: roughly, the api exposed via the genstudio.plot module
+
 Parameters
 {: .api .api-section }
 
 
 - `txt` (str): JavaScript code with optional %1, %2, etc. placeholders
 
-- `*params`: Values to substitute for %1, %2, etc. placeholders
+- `*params` (Any): Values to substitute for %1, %2, etc. placeholders
 
 - `expression` (bool): Whether to evaluate as expression or statement
 
@@ -2562,6 +2612,18 @@ Sets `{"inset": i}`.
 
 Set margin values for a plot using CSS-style margin shorthand.
 
+Parameters
+{: .api .api-section }
+
+
+- `*args` (Any): Margin values as integers or floats, following CSS margin shorthand rules
+
+Returns
+{: .api .api-section }
+
+
+- A dictionary mapping margin properties to their values (dict)
+
 
 
 ### repeat {: .api .api-member }
@@ -2603,7 +2665,7 @@ Sets `{"width": width}`.
 Returns a new ellipse mark for the given *values* and *options*.
 
 If neither **x** nor **y** are specified, *values* is assumed to be an array of
-pairs [[*x₀*, *y₀*], [*x₁*, *y₁*], [*x₂*, *y₂*], …] such that **x** = [*x₀*,
+pairs [[*x₀*, *y₀*], [*x₁*, *y₁*], [*x₂*, *y₂*, …] such that **x** = [*x₀*,
 *x₁*, *x₂*, …] and **y** = [*y₀*, *y₁*, *y₂*, …].
 
 The **rx** and **ry** options specify the x and y radii respectively. If only
@@ -2617,7 +2679,7 @@ Parameters
 {: .api .api-section }
 
 
-- `values`: The data for the ellipses.
+- `values` (Any): The data for the ellipses.
 
 - `options` (dict[str, Any]): Additional options for customizing the ellipses.
 
@@ -2743,9 +2805,9 @@ Parameters
 {: .api .api-section }
 
 
-- `values` (dict): A dictionary mapping state variable names to their initial values.
+- `values` (dict[str, Any]): A dictionary mapping state variable names to their initial values.
 
-- `sync` (Union[set, bool, None]): Controls which state variables are synced between Python and JavaScript.
+- `sync` (Union[set[str], bool, None]): Controls which state variables are synced between Python and JavaScript.
 
     If True, all variables are synced. If a set, only variables in the set are synced.
 
@@ -2755,7 +2817,7 @@ Returns
 {: .api .api-section }
 
 
-- An object that initializes the state variables when rendered.
+- An object that initializes the state variables when rendered. (JSCall)
 
 
 
@@ -2793,3 +2855,43 @@ Returns
 ### dimensions {: .api .api-member }
 
 Attaches dimension metadata, for further processing in JavaScript.
+
+
+
+### Import {: .api .api-member }
+
+Import JavaScript code into the GenStudio environment.
+
+Parameters
+{: .api .api-section }
+
+
+- `source` (str): JavaScript source code. Can be:
+
+    - Inline JavaScript code
+
+    - URL starting with http(s):// for remote modules
+
+    - Local file path starting with path: prefix
+
+- `alias` (Optional[str]): Namespace alias for the entire module
+
+- `default` (Optional[str]): Name for the default export
+
+- `refer` (Optional[list[str]]): Set of names to import directly, or True to import all
+
+- `refer_all` (bool): Alternative to refer=True
+
+- `rename` (Optional[dict[str, str]]): Dict of original->new names for referred imports
+
+- `exclude` (Optional[list[str]]): Set of names to exclude when using refer_all
+
+- `format` (str): Module format ('esm' or 'commonjs')
+
+Examples
+{: .api .api-section }
+
+
+```python
+[(<DocstringSectionKind.text: 'text'>, '# CDN import with namespace alias'), (<DocstringSectionKind.examples: 'examples'>, '>>> Plot.Import(\n...     source="https://cdn.skypack.dev/lodash-es",\n...     alias="_",\n...     refer=["flattenDeep", "partition"],\n...     rename={"flattenDeep": "deepFlatten"}\n... )'), (<DocstringSectionKind.text: 'text'>, '# Local file import'), (<DocstringSectionKind.examples: 'examples'>, '>>> Plot.Import(\n...     source="path:src/app/utils.js",  # relative to working directory\n...     refer=["formatDate"]\n... )'), (<DocstringSectionKind.text: 'text'>, '# Inline source with refer_all'), (<DocstringSectionKind.examples: 'examples'>, '>>> Plot.Import(\n...     source=\'\'\'\n...     export const add = (a, b) => a + b;\n...     export const subtract = (a, b) => a - b;\n...     \'\'\',\n...     refer_all=True,\n...     exclude=["subtract"]\n... )'), (<DocstringSectionKind.text: 'text'>, '# Default export handling'), (<DocstringSectionKind.examples: 'examples'>, '>>> Plot.Import(\n...     source="https://cdn.skypack.dev/d3-scale",\n...     default="createScale"\n... )')]
+```

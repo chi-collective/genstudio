@@ -164,19 +164,32 @@ function debounce(func, wait, leading = true) {
   };
 }
 
-export function useContainerWidth() {
-  const containerRef = React.useRef(null);
-  const [containerWidth, setContainerWidth] = React.useState(0);
-  const lastWidthRef = React.useRef(0);
-  const THRESHOLD_PX = 10;
-  const DEBOUNCE = false;
+export function throttle<T extends (...args: any[]) => void>(
+  func: T,
+  limit: number
+): (...args: Parameters<T>) => void {
+  let inThrottle = false;
+  return function(this: any, ...args: Parameters<T>) {
+    if (!inThrottle) {
+      func.apply(this, args);
+      inThrottle = true;
+      setTimeout(() => (inThrottle = false), limit);
+    }
+  };
+}
+
+export function useContainerWidth(threshold: number = 10): [React.RefObject<HTMLDivElement | null>, number] {
+  const containerRef = React.useRef<HTMLDivElement | null>(null);
+  const [containerWidth, setContainerWidth] = React.useState<number>(0);
+  const lastWidthRef = React.useRef<number>(0);
+  const DEBOUNCE: boolean = false;
 
   React.useEffect(() => {
     if (!containerRef.current) return;
 
-    const handleWidth = width => {
+    const handleWidth = (width: number) => {
       const diff = Math.abs(width - lastWidthRef.current);
-      if (diff >= THRESHOLD_PX) {
+      if (diff >= threshold) {
         lastWidthRef.current = width;
         setContainerWidth(width);
       }
@@ -207,4 +220,41 @@ export function joinClasses(...classes) {
     if (classes[i]) result += " " + classes[i];
   }
   return result;
+}
+
+/**
+ * Deep equality check that only traverses plain objects and arrays.
+ * All other types (including TypedArrays) are compared by identity.
+ */
+export function shallowDeepEqual(a: any, b: any): boolean {
+    if (a === b) return true;
+
+    // Check if both are arrays OR both are plain objects
+    const aIsArray = Array.isArray(a);
+    const bIsArray = Array.isArray(b);
+    const aIsPlainObj = a && a.constructor === Object && Object.getPrototypeOf(a) === Object.prototype;
+    const bIsPlainObj = b && b.constructor === Object && Object.getPrototypeOf(b) === Object.prototype;
+
+    if ((aIsArray && bIsArray) || (aIsPlainObj && bIsPlainObj)) {
+        const keys = Object.keys(a);
+        if (keys.length !== Object.keys(b).length) return false;
+
+        return keys.every(key => (
+            Object.prototype.hasOwnProperty.call(b, key) &&
+            shallowDeepEqual(a[key], b[key])
+        ));
+    }
+
+    return a === b;
+}
+
+
+export function useShallowMemo<T>(value: T): T {
+  const ref = useRef<T>();
+
+  if (!ref.current || !shallowDeepEqual(value, ref.current)) {
+      ref.current = value;
+  }
+
+  return ref.current;
 }

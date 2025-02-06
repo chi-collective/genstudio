@@ -13,8 +13,10 @@ import { joinClasses, tw } from "./utils";
 const { useState, useEffect, useContext, useRef, useCallback } = React
 import Katex from "katex";
 import markdownItKatex from "./markdown-it-katex";
+import * as scene3d from "./scene3d/scene3d"
 
-export { render };
+export { render, scene3d };
+
 export const CONTAINER_PADDING = 10;
 const KATEX_CSS_URL = "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css"
 
@@ -83,11 +85,10 @@ export const Slider = mobxReact.observer(
             style } = options;
 
         // Set default controls based on fps
-        if (controls === undefined) {
+        if (!controls) {
             controls = fps ? ["slider", "play"] : ["slider"];
-        } else if (controls === false) {
-            controls = [];
         }
+        controls = controls || []
         if (options.showSlider === false) {
             controls = controls.filter(control => control !== "slider");
         }
@@ -323,7 +324,6 @@ function renderArray($state, value) {
     const [element, ...args] = value
     const maybeElement = element && $state.evaluate(element)
     const elementType = typeof maybeElement
-
     if (elementType === 'string' || elementType === 'function' || (typeof maybeElement === 'object' && maybeElement !== null && "$$typeof" in maybeElement)) {
         return Hiccup(maybeElement, ...args)
     } else {
@@ -396,13 +396,15 @@ export function Hiccup(tag, props, ...children) {
         props = {};
     }
 
-    props = $state.evaluate(props)
+    const evaluatedProps = $state.evaluate(props)
+    // console.log('Props ', ...Object.entries(props).flat(), )
+    // console.log('EProps', ...Object.entries(evaluatedProps).flat())
+    // console.log("---------")
 
 
-
-    if (props.class) {
-        props.className = props.class;
-        delete props.class;
+    if (evaluatedProps.class) {
+        evaluatedProps.className = evaluatedProps.class;
+        delete evaluatedProps.class;
     }
 
     let baseTag = tag;
@@ -413,25 +415,25 @@ export function Hiccup(tag, props, ...children) {
         [baseTag, ...classes] = tag.split('.');
         [baseTag, id] = baseTag.split('#');
 
-        if (id) { props.id = id; }
+        if (id) { evaluatedProps.id = id; }
 
         if (classes.length > 0) {
-            if (props.className) {
-                classes.push(props.className);
+            if (evaluatedProps.className) {
+                classes.push(evaluatedProps.className);
             }
-            props.className = classes.join(' ');
+            evaluatedProps.className = classes.join(' ');
         }
     }
 
-    if (props.className) {
-        props.className = tw(props.className)
+    if (evaluatedProps.className) {
+        evaluatedProps.className = tw(evaluatedProps.className)
     }
 
     if (!children.length) {
-        return React.createElement(baseTag, props)
+        return React.createElement(baseTag, evaluatedProps)
     }
 
-    return React.createElement(baseTag, props, children.map(node));
+    return React.createElement(baseTag, evaluatedProps, children.map(node));
 }
 
 export function html(element) {

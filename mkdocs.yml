@@ -34,6 +34,7 @@ nav:
     - Mouse events: interactivity/events.py
     - Conditional Rendering: learn-more/cond.py
     - Tailing data: interactivity/tail.py
+  - Scene3D: learn-more/scene3d.py
   - Learn More:
     - Working with Color: learn-more/color.py
     - Python Event Loops: learn-more/python-event-loop.py
@@ -50,7 +51,9 @@ nav:
       - Highlighting Code: examples/bylight.py
       - Rendering LaTeX: examples/katex.py
       - Render Pixel Data: examples/pixels.py
-  - API Docs: api/plot.md
+  - API Docs:
+    - Plot: api/plot.md
+    - Scene3D: api/scene3d.md
   - How Do I...: learn-more/how-do-i.py
 
   - Changelog: CHANGELOG.md
@@ -66,6 +69,8 @@ plugins:
       modules:
         - module: genstudio.plot
           output: api/plot.md
+        - module: genstudio.scene3d
+          output: api/scene3d.md
   - mkdocs-jupyter:
       include: ["*.py"]
       ignore: ["llms.py"]

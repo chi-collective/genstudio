@@ -177,10 +177,17 @@ export function evaluate(node, $state, experimental, buffers) {
         return undefined;
       }
     case "ndarray":
+      if (node.array) {
+        return node.array
+      }
       if (node.data?.__type__ === "buffer") {
         node.data = buffers[node.data.index];
       }
-      return evaluateNdarray(node);
+      if (node.__buffer_index__ !== undefined) {
+        node.data = buffers[node.__buffer_index__]
+      }
+      node.array = evaluateNdarray(node)
+      return node.array;
     default:
       return Object.fromEntries(
         Object.entries(node).map(([key, value]) => [

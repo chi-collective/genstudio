@@ -240,8 +240,10 @@ body .jupyter-wrapper .jp-Notebook {
 
 }
 
-p {
-    margin-bottom: 1em;
+article {
+    p {
+        margin-bottom: 1em;
+    }
 }
 
 h2.api.api-section {

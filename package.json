@@ -8,6 +8,8 @@
   "devDependencies": {
     "@testing-library/jest-dom": "^6.5.0",
     "@testing-library/react": "^16.0.1",
+    "@webgpu/types": "^0.1.53",
+    "canvas": "^3.1.0",
     "esbuild": "^0.21.5",
     "esbuild-css-modules-plugin": "^3.1.2",
     "jsdom": "^25.0.0",
@@ -25,9 +27,12 @@
     "@twind/preset-autoprefix": "^1.0.7",
     "@twind/preset-tailwind": "^1.1.4",
     "@twind/preset-typography": "^1.0.7",
+    "@types/react": "^19.0.4",
+    "@types/react-dom": "^19.0.2",
     "bylight": "^1.0.5",
     "d3": "^7.9.0",
     "esbuild-plugin-import-map": "^2.1.0",
+    "gl-matrix": "^3.4.3",
     "katex": "^0.16.11",
     "markdown-it": "^14.1.0",
     "mobx": "^6.13.1",
@@ -37,7 +42,8 @@
     "tailwindcss": "^3.4.14"
   },
   "scripts": {
-    "release": "poetry run python scripts/release.py",
+    "release": "poetry run python scripts/release.py $*",
+    "alpha": "poetry run python scripts/release.py --alpha",
     "build": "node esbuild.config.mjs",
     "dev": "node esbuild.config.mjs --watch",
     "watch:docs": "poetry run mkdocs serve",

@@ -55,9 +55,11 @@ import genstudio.plot as Plot
         r=10,  # larger, easier to drag
         render=Plot.renderChildEvents(
             {
-                "onDrag": Plot.js(""" (e) => {
+                "onDrag": Plot.js(
+                    """ (e) => {
                 $state.update(["points", "setAt", [e.index, [e.x, e.y]]])
-               }""")
+               }"""
+                )
             }
         ),
     )
@@ -191,7 +193,8 @@ from genstudio.plot import js
     | [
         "div.flex.items-center.justify-center.font-bold.select-none",
         {
-            "onClick": js("""(e) => {
+            "onClick": js(
+                """(e) => {
           e.preventDefault();
           const midPoint = e.currentTarget.offsetWidth / 2;
           if (e.clientX < midPoint) {
@@ -201,7 +204,8 @@ from genstudio.plot import js
             // Click on right side - go forward
             $state.frame = (prevValue) => prevValue === $state.letters.length - 1 ? 0 : prevValue + 1;
           }
-          }""")
+          }"""
+            )
         },
         ["div.text-[120px]", js("$state.letters[$state.frame]")],
         [
@@ -395,7 +399,8 @@ cat_data = [{"category": c, "value": v} for c, v in zip(categories, values)]
         + Plot.title("Bubble"),
         cols=3,
     )
-    | Plot.md("""
+    | Plot.md(
+        """
 GenStudio provides access to the full Observable Plot API, which includes many plot types:
 
 - Basic: line, dot (scatter), area, rect
@@ -420,7 +425,8 @@ Interactive features include:
 - Click and drag selection
 - Animation and transitions
 - State management between Python and JavaScript
-""")
+"""
+    )
 )
 # </example>
 # %%
@@ -707,10 +713,12 @@ def updateState(widget, _):
         js("$state.shapes"),
         {
             "z": "2",
-            "stroke": Plot.js("""(d) => {
+            "stroke": Plot.js(
+                """(d) => {
                 const colors = ["#ff6b6b", "#4ecdc4", "#45b7d1"];
                 return colors[d[2]];
-            }"""),
+            }"""
+            ),
             "strokeWidth": 2,
         },
     )
@@ -808,6 +816,143 @@ tabs_view(
             ],
         ],
     ],
+)
+# </example>
+# %%
+# <example>
+# User: Render a 3d spiral point cloud.
+# Assistant:
+import genstudio.plot as Plot
+import numpy as np
+from genstudio.scene3d import PointCloud, Scene
+
+# Create a spiral point cloud
+n_points = 1000
+t = np.linspace(0, 10 * np.pi, n_points)
+r = t / 30
+x = r * np.cos(t)
+y = r * np.sin(t)
+z = t / 10
+
+# Stack into positions array
+positions = np.column_stack([x, y, z])
+
+# Create rainbow colors
+hue = t / t.max()
+colors = np.zeros((n_points, 3))
+colors[:, 0] = np.clip(1.5 - abs(3.0 * hue - 1.5), 0, 1)  # Red
+colors[:, 1] = np.clip(1.5 - abs(3.0 * hue - 3.0), 0, 1)  # Green
+colors[:, 2] = np.clip(1.5 - abs(3.0 * hue - 4.5), 0, 1)  # Blue
+
+# Create varying point sizes
+sizes = 0.01 + 0.02 * np.sin(t)
+
+(
+    Plot.initialState({"hover_point": None})
+    | Scene(
+        PointCloud(
+            positions,
+            colors,
+            sizes,
+            onHover=Plot.js("(i) => $state.update({hover_point: i})"),
+            decorations=[
+                {
+                    "indexes": Plot.js(
+                        "$state.hover_point ? [$state.hover_point] : []"
+                    ),
+                    "color": [1, 1, 0],  # Yellow highlight
+                    "scale": 1.5,  # Make highlighted point larger
+                }
+            ],
+        ),
+        # Set up camera position for good view
+        {
+            "defaultCamera": {
+                "position": [2, 2, 5],
+                "target": [0, 0, 0],
+                "up": [0, 0, 1],
+            }
+        },
+    )
+)
+# </example>
+# %%
+# <example>
+# User: I want to visualize an animation of two spheres with opposite growing/shrinking motion, including interactive controls to play/pause the animation and adjust the camera. Show the scene twice (synchronized motion/camera), one with white spheres and one with pink spheres.
+# Assistant:
+import genstudio.plot as Plot
+import numpy as np
+from genstudio.scene3d import Ellipsoid, Scene
+
+
+def generate_ellipsoid_frames(n_frames=60):
+    """Generate frames of two ellipsoids growing/shrinking oppositely."""
+    centers_frames = np.repeat(
+        np.array([[-0.5, 0, 0], [0.5, 0, 0]])[np.newaxis, :, :], n_frames, axis=0
+    )  # Centers frames
+    t = np.linspace(0, 2 * np.pi, n_frames)  # Time array
+    radii_frames = np.stack(
+        [
+            np.stack(
+                [
+                    0.1 + 0.05 * np.sin(t),
+                    0.1 + 0.05 * np.sin(t),
+                    0.1 + 0.05 * np.sin(t),
+                ],
+                axis=1,
+            ),
+            np.stack(
+                [
+                    0.15 - (0.1 + 0.05 * np.sin(t)),
+                    0.15 - (0.1 + 0.05 * np.sin(t)),
+                    0.15 - (0.1 + 0.05 * np.sin(t)),
+                ],
+                axis=1,
+            ),
+        ],
+        axis=1,
+    )  # Radii frames
+    return centers_frames, radii_frames
+
+
+# Generate animation frames
+centers, radii = generate_ellipsoid_frames()
+
+# Create colors (gradient from red to blue)
+colors = np.stack([np.linspace(1, 0, 10), np.zeros(10), np.linspace(0, 1, 10)], axis=1)
+
+ellipsoids = Ellipsoid(
+    centers=Plot.js("$state.centers[$state.frame]"),
+    radii=Plot.js("$state.radii[$state.frame]"),
+    colors=Plot.js("$state.colors"),
+)
+
+camera = {
+    "camera": Plot.js("$state.camera"),
+    "onCameraChange": Plot.js("(camera) => $state.update({camera})"),
+}
+
+(
+    Plot.initialState(
+        {
+            "frame": 0,
+            "centers": centers.reshape(60, -1),  # Flatten to (n_frames, n_ellipsoids*3)
+            "radii": radii.reshape(60, -1),  # Flatten to (n_frames, n_ellipsoids*3)
+            "colors": colors.flatten(),  # Flatten to (n_ellipsoids*3,)
+            "camera": {
+                "position": [1, 1, 0],  # Closer camera position
+                "target": [0, 0, 0],
+                "up": [0, 0, 1],
+            },
+        }
+    )
+    | ellipsoids + camera & ellipsoids.merge(color=[1, 0, 1]) + camera
+    | Plot.Slider(
+        "frame",
+        rangeFrom=Plot.js("$state.centers"),
+        fps=30,
+        controls=["play"],
+    )
 )
 # </example>
 # %%
