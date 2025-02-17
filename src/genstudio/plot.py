@@ -343,22 +343,22 @@ def _test_get_in():
     data = {"a": [{"b": [{"c": 1}, {"c": 2}]}, {"b": [{"c": 3}, {"c": 4}]}]}
 
     result = get_in(data, ["a", {...: "first"}, "b", {...: "second"}, "c"])
-    assert isinstance(
-        result, Dimensioned
-    ), f"Expected Dimensioned, got {type(result).__name__}"
+    assert isinstance(result, Dimensioned), (
+        f"Expected Dimensioned, got {type(result).__name__}"
+    )
     assert result.value == [
         [1, 2],
         [3, 4],
     ], f"Expected [[1, 2], [3, 4]], got {result.value}"
-    assert isinstance(
-        result.dimensions, list
-    ), f"Expected dimensions to be a list, got {type(result.dimensions).__name__}"
-    assert (
-        len(result.dimensions) == 2
-    ), f"Expected 2 dimensions, got {len(result.dimensions)}"
-    assert (
-        [d["key"] for d in result.dimensions] == ["first", "second"]
-    ), f"Expected dimension keys to be ['first', 'second'], got {[d['key'] for d in result.dimensions]}"
+    assert isinstance(result.dimensions, list), (
+        f"Expected dimensions to be a list, got {type(result.dimensions).__name__}"
+    )
+    assert len(result.dimensions) == 2, (
+        f"Expected 2 dimensions, got {len(result.dimensions)}"
+    )
+    assert [d["key"] for d in result.dimensions] == ["first", "second"], (
+        f"Expected dimension keys to be ['first', 'second'], got {[d['key'] for d in result.dimensions]}"
+    )
 
     flattened = get_in(
         data, ["a", {...: "first"}, "b", {...: "second"}, "c", {"leaves": "c"}]
