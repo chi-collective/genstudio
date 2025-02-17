@@ -9,7 +9,7 @@ REPLACEMENTS = {
 }
 
 CSS_PATTERN = (
-    rf'(@media\s+.*?)((?:min|max)-width:\s*({"|".join(REPLACEMENTS.keys())})em)'
+    rf"(@media\s+.*?)((?:min|max)-width:\s*({'|'.join(REPLACEMENTS.keys())})em)"
 )
 CSS_FILE_PATTERN = "main.*.min.css"
 
